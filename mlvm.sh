@@ -16,19 +16,27 @@ uninstall() {
   rm -fr ~/Library/Application\ Support/MarkLogic/Data
   rm -fr ~/Library/MarkLogic
   rm -fr ~/Library/Application\ Support/MarkLogic
-  rm -fr ~/Library/StartupItems/MarkLogic 
+  sudo rm -fr ~/Library/StartupItems/MarkLogic 
   rm -fr ~/Library/PreferencePanes/MarkLogic.prefPane
 }
 
 capture() {
   echo "capturing current installation as $1"
   mkdir -p ~/mlvm/versions/$1
-  pkgutil --export-plist com.marklogic.server > ~/mlvm/versions/$1/pkg.plist
   cp -r ~/Library/Application\ Support/MarkLogic/Data ~/mlvm/versions/$1/Data
   cp -r ~/Library/MarkLogic ~/mlvm/versions/$1/Program
   cp -r ~/Library/Application\ Support/MarkLogic ~/mlvm/versions/$1/Support
   cp -r ~/Library/StartupItems/MarkLogic ~/mlvm/versions/$1/StartupItems
   cp -r ~/Library/PreferencePanes/MarkLogic.prefPane ~/mlvm/versions/$1/PrefPane
+}
+
+switchto() {
+  echo "switching to $1"
+  cp -r ~/mlvm/versions/$1/Program ~/Library/MarkLogic
+  cp -r ~/mlvm/versions/$1/Support ~/Library/Application\ Support/MarkLogic
+  cp -r ~/mlvm/versions/$1/Data ~/Library/Application\ Support/MarkLogic/Data
+  sudo cp -r ~/mlvm/versions/$1/StartupItems ~/Library/StartupItems/MarkLogic
+  cp -r ~/mlvm/versions/$1/PrefPane ~/Library/PreferencePanes/MarkLogic.prefPane
 }
 
 case "$1" in 
@@ -47,7 +55,8 @@ case "$1" in
     fi
     #TODO ensure the specified version exists
     #TODO check for any running MarkLogic processes
-    echo "switching to $2"
+    uninstall
+    switchto $2
     #TODO acknowledge the -k keep option
 
     ;;
@@ -61,6 +70,7 @@ case "$1" in
   capture)
     #TODO check if version # is already present and instruct to use -f option 
     capture $2
+    pkgutil --export-plist com.marklogic.server > ~/mlvm/versions/$2/pkg.plist
     ;;
 
   prepare)
