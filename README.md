@@ -4,10 +4,10 @@
 ## Capabilities
  Currently this script can:
 
-    -  install new versions (from a .dmg file on the local machine)
-    -  capture an existing install to continue use with MLVM
-    -  switch versions while maintaining data
-    -  remove unused versions
+   -  install new versions (from a .dmg file on the local machine)
+   -  capture an existing install to continue use with MLVM
+   -  switch versions while maintaining data
+   -  remove unused versions
  
  Since 1.1:  This script supports MacOSX.  This script supports use of the Preference Pane for starting/stopping the server (can also use mlvm start/stop)
 
@@ -23,7 +23,9 @@
    -  execute: mlvm list to see available versions
 
 ## Installing ML versions
+
  To install a new version you must:
+
    - download a valid .dmg installer file
    - execute: mlvm install <version_name> <path to your .dmg installer>
 

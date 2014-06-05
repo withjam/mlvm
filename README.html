@@ -124,11 +124,12 @@ body{font-size:16px;}
 <p>Version Manager for using multiple versions of MarkLogic without using VMs or port numbers.  Note: only one version can be active at a time.</p>
 <h2 id="capabilities">Capabilities</h2>
 <p>Currently this script can:</p>
-<pre><code>-  install new versions (from a .dmg file on the local machine)
--  capture an existing install to continue use with MLVM
--  switch versions while maintaining data
--  remove unused versions
-</code></pre>
+<ul>
+<li>install new versions (from a .dmg file on the local machine)</li>
+<li>capture an existing install to continue use with MLVM</li>
+<li>switch versions while maintaining data</li>
+<li>remove unused versions</li>
+</ul>
 <p>Since 1.1:  This script supports MacOSX.  This script supports use of the Preference Pane for starting/stopping the server (can also use mlvm start/stop)</p>
 <h2 id="installing-mlvm">Installing MLVM</h2>
 <p>Recommended installation on a Mac:</p>
@@ -142,9 +143,11 @@ body{font-size:16px;}
 <li>execute: mlvm list to see available versions</li>
 </ul>
 <h2 id="installing-ml-versions">Installing ML versions</h2>
-<p>To install a new version you must:
-   - download a valid .dmg installer file
-   - execute: mlvm install <version_name> <path to your .dmg installer></p>
+<p>To install a new version you must:</p>
+<ul>
+<li>download a valid .dmg installer file</li>
+<li>execute: mlvm install <version_name> <path to your .dmg installer></li>
+</ul>
 <p>For example:  </p>
 <pre><code>mlvm install 7.0.2.3 ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg
 </code></pre>
