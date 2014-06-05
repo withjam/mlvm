@@ -133,6 +133,10 @@ case "$1" in
 
   # syntax: mlvm use <version_name>
   use)
+    if [ ! -d $SOURCE/versions/.current ] ; then
+      echo "You have not yet prepared your environment to use MLVM.  Please execute: mlvm prepare first"
+      exit 1
+    fi
     if [ "$#" -ne 2 ]; then 
       echo "You must specify which version to use.  'mlvm list' to see available versions"
       exit 1
@@ -199,7 +203,7 @@ case "$1" in
     ;;
 
   status)
-    if [ -z $sym ]; then
+    if [ ! -d $SOURCE/versions/.current ]; then
       echo 'You are not currently using mlvm.'
       echo
       echo "Run 'mlvm install <version_name> <dmg_file>' to install a new version. (Note: this will remove an existing installation made without mlvm)"
@@ -207,7 +211,10 @@ case "$1" in
       echo "If you have previously installed a version of MarkLogic, FIRST run 'mlvm -k <version_name> prepare' to retain it along with future mlvm installations. Otherwise it will be replaced and data will be lost."      
       exit 1
     fi
-    echo "Active ML version: $(basename $(dirname $sym))"
+    echo "mlvm version: $version"
+    if [ ! -z $sym ]; then
+      echo "Active ML version: $(basename $(dirname $sym))"
+    fi
     ;;
 
   # syntax: mlvm [-k <version_name>] prepare
