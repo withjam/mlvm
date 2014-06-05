@@ -43,6 +43,6 @@ The version name you give it will uniquely identify it in your list and must be 
 
 ## Credits
 
-Author: Matt Pileggi &lt;Matt.Pileggi@marklogic.com&gt;
+Author: Matt Pileggi
 
-Contributors:  Justin Makeig &lt;justin.makeig@marklogic.com&gt;, Paxton Hare &lt;Paxton.Hare@marklogic.com&gt;
+Contributors:  Justin Makeig, Paxton Hare
