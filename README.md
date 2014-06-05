@@ -25,5 +25,20 @@
    - download a valid .dmg installer file
    - execute: mlvm install <version_name> <path to your .dmg installer>
 
-   For example:  mlvm install 7.0.2.3 ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg
-   The version name you give it will uniquely identify it in your list and must be a valid directory name.  You can have multiples of the same MarkLogic server version as long as you give them each unique version names when installing via MLVM
+For example:  
+    mlvm install 7.0.2.3 ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg
+   
+The version name you give it will uniquely identify it in your list and must be a valid directory name.  You can have multiples of the same MarkLogic server version as long as you give them each unique version names when installing via MLVM
+
+## Listing installed versions
+
+    mlvm list
+
+## Switching to an installed version
+
+    mlvm use <version_name>
+
+## Credits
+
+Author: Matt Pileggi <Matt.Pileggi@marklogic.com>
+Contributors:  Justin Makeig <justin.makeig@marklogic.com>, Paxton Hare <Paxton.Hare@marklogic.com>
