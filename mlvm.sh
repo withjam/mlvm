@@ -1,4 +1,35 @@
 #!/bin/bash
+#
+# Version Manager for using multiple versions of MarkLogic without using VMs or port numbers.  Note: only one version can be active at a time.
+# 
+# Currently this script can:
+#    - install new versions (from a .dmg file on the local machine)
+#    - capture an existing install to continue use with MLVM
+#    - switch versions while maintaining data
+#    - remove unused versions
+# 
+# Since 1.1:  This script supports MacOSX.  This script supports use of the Preference Pane for starting/stopping the server (can also use mlvm start/stop)
+#
+# Recommended installation on a Mac:
+#   -  clone the repository somewhere (git clone git@github.com:withjam/mlvm.git)
+#   -  create an alias in your bash profile for mlvm.sh like alias mlvm="<cloned project dir>/mlvm.sh"
+#   -  create an alias in your bash profile for sudo if you don't have one already:  alias sudo='sudo '
+#   -  if you have an existing ML install that you want to keep, execute: mlvm -k <version_number> prepare
+#   -  if you have an existing ML install but don't care to keep it, execute: mlvm -f prepare
+#   -  if you have no existing ML install execute: mlvm prepare (note: prepare command requires root privileges, so may require run as sudo)
+#   -  execute: mlvm list to see available versions
+#
+# To install a new version you must:
+#   - download a valid .dmg installer file
+#   - execute: mlvm install <version_name> <path to your .dmg installer>
+#
+#   For example:  mlvm install 7.0.2.3 ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg
+#   The version name you give it will uniquely identify it in your list and must be a valid directory name.  You can have multiples of the same MarkLogic server version as long as you give them each unique version names when installing via MLVM
+#
+#
+# Author: Matt Pileggi <Matt.Pileggi@marklogic.com>
+# Contributors:  Justin Makeig <justin.makeig@marklogic.com>, Paxton Hare <Paxton.Hare@marklogic.com>
+version=1.1
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -55,21 +86,33 @@ capture() {
   chown -R $_user:$_group $SOURCE/versions/$1
 }
 
-# returns the PID of the running MarkLogic process, if there is one
-mlpid() {
-  return 0
-}
-
 switchto() {
   echo "switching to $1"
-  #TODO update symlinks and system settings
+  #clear symlinks then recreate them
+  rm ~/Library/MarkLogic
+  rm ~/Library/Application\ Support/MarkLogic
+  rm ~/Library/PreferencePanes/MarkLogic.prefPane
+  rm $SOURCE/versions/.current/*
+  vdir=$(versiondir $1)
+  ln -s $vdir/MarkLogic ~/Library/MarkLogic
+  ln -s $vdir/Support ~/Library/Application\ Support/MarkLogic
+  ln -s $vdir/MarkLogic.prefPane ~/Library/PreferencePanes/MarkLogic.prefPane
+  # current version links for startup commands
+  ln -s $vdir/StartupItems/MarkLogic/* $SOURCE/versions/.current
 }
 
 isactive() {
-  if [ ! -z $sym ] && [ $(basename $sym) = $1 ]; then
+  if [ ! -z $sym ] && [ $(basename $(dirname $sym)) = $1 ]; then
     return 0
   fi
   return 1
+}
+
+startServer() {
+  ~/Library/StartupItems/MarkLogic/MarkLogic start
+}
+stopServer() {
+  ~/Library/StartupItems/MarkLogic/MarkLogic stop
 }
 
 case "$1" in 
@@ -92,18 +135,19 @@ case "$1" in
       echo "You must specify which version to use.  'mlvm list' to see available versions"
       exit 1
     fi
-    #TODO ensure the specified version exists
-    #TODO check for any running MarkLogic processes
-    if [ mlpid ]; then 
-      echo "Stopping server" 
+    if ! hasversion $2 ; then
+      echo "There is no version \"$2\""
+      exit 1
     fi
+    stopServer
     switchto $2
+    startServer
     ;;
 
   # syntax:  mlvm install <version_name> <dmg_file>
   install) #installs a new .dmg version of ML
     #TODO download automatically, for now it requires the path to a previously downloaded .dmg
-    vdir=$SOURCE/versions/$2
+    vdir=$(versiondir $2)
     if [ -d $vdir ]; then
       echo "$2 is already installed"
       exit 1
@@ -130,7 +174,7 @@ case "$1" in
       echo "use 'mlvm list' to see a list of available versions"
       exit 1
     fi
-    vdir=$SOURCE/versions/$2
+    vdir=$(versiondir $2)
     if [ ! -d $vdir ]; then
       echo "\"$2\" is not installed"
       exit 1
@@ -144,15 +188,15 @@ case "$1" in
     ;;
 
   stop)
-    ~/Library/StartupItems/MarkLogic/MarkLogic stop
+    stopServer
     ;;
 
   start)
-    ~/Library/StartupItems/MarkLogic/MarkLogic start
+    startServer
     ;;
 
   status)
-    if [ -z $sym]; then
+    if [ -z $sym ]; then
       echo 'You are not currently using mlvm.'
       echo
       echo "Run 'mlvm install <version_name> <dmg_file>' to install a new version. (Note: this will remove an existing installation made without mlvm)"
@@ -160,7 +204,7 @@ case "$1" in
       echo "If you have previously installed a version of MarkLogic, FIRST run 'mlvm -k <version_name> prepare' to retain it along with future mlvm installations. Otherwise it will be replaced and data will be lost."      
       exit 1
     fi
-    echo "Active ML version: $(basename $sym)"
+    echo "Active ML version: $(basename $(dirname $sym))"
     ;;
 
   # syntax: mlvm [-k <version_name>] prepare
