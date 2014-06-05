@@ -13,10 +13,8 @@ cd $SOURCE/versions
 
 # current MarkLogic symlink
 sym=$(readlink ~/Library/MarkLogic)
-# flags
-forcing=false
 
-while getopts :k: opt; do
+while getopts :fk: opt; do
   case $opt in
     f) forcing=true ;;
     k) keeping=$OPTARG ;;
@@ -37,22 +35,24 @@ hasversion() {
 }
 
 uninstall() {
-  echo "uninstalling default MarkLogic"
-  rm -fr ~/Library/Application\ Support/MarkLogic/Data
+  echo "Uninstalling conventional MarkLogic"
   rm -fr ~/Library/MarkLogic
   rm -fr ~/Library/Application\ Support/MarkLogic
-  sudo rm -fr ~/Library/StartupItems/MarkLogic 
+  rm -fr ~/Library/StartupItems/MarkLogic 
   rm -fr ~/Library/PreferencePanes/MarkLogic.prefPane
-  pkgutil --export-plist com.marklogic.server > $SOURCE/versions/$2/pkg.plist
 }
 
 capture() {
-  echo "keeping current installation as $1"
-  mkdir -p $SOURCE/versions/$1/Support
-  cp -r ~/Library/MarkLogic $SOURCE/versions/$1/MarkLogic
-  cp -r ~/Library/Application\ Support/MarkLogic/* $SOURCE/versions/$1/Support
-  cp -r ~/Library/StartupItems/MarkLogic $SOURCE/versions/$1/StartupItems
-  cp -r ~/Library/PreferencePanes/MarkLogic.prefPane $SOURCE/versions/$1/MarkLogic.prefPane
+  echo "Keeping current installation as $1"
+  mkdir -p $SOURCE/versions/$1/StartupItems
+  cp -a ~/Library/MarkLogic $SOURCE/versions/$1/MarkLogic
+  cp -a ~/Library/Application\ Support/MarkLogic $SOURCE/versions/$1/Support
+  cp -a ~/Library/StartupItems/MarkLogic $SOURCE/versions/$1/StartupItems/MarkLogic
+  cp -a ~/Library/PreferencePanes/MarkLogic.prefPane $SOURCE/versions/$1/MarkLogic.prefPane
+  # make sure everything is owned by this user
+  _user=$(who am i | awk '{print $1}')
+  _group=$(id -g $_user)
+  chown -R $_user:$_group $SOURCE/versions/$1
 }
 
 # returns the PID of the running MarkLogic process, if there is one
@@ -165,20 +165,43 @@ case "$1" in
 
   # syntax: mlvm [-k <version_name>] prepare
   prepare) # prepares for use of mlvm by uninstalling existing MarkLogic, can optionally back up your existing install as a version
-    #TODO requires sudo
-    #uninstalls the current ML installation, should probably ask if user wants to capture or update before proceeding
-    #TODO warn user
-    #TODO check if any running MarkLogic processes
-    if [ ! -z $keeping ]; then
-      if hasversion $keeping ; then
-        echo "\"$keeping\" already exists"
+    if [ -d ~/Library/MarkLogic ]; then
+      echo "Detected an existing installation of MarkLogic"
+      if [ -z $keeping ] && [ -z $forcing ] ; then
+        echo "Any existing MarkLogic data will be lost in the process unless kept.  You must either: "
+        echo "  'mlvm -k <version_name> prepare' to retain the current version with mlvm, or "
+        echo "  'mlvm -f prepare' to force an uninstallation and loss of data"
         exit 1
       fi
-      capture $keeping
+      if [ "$(id -u)" != "0" ]; then
+        echo "This command requires root privileges.  Please run as sudo";
+        exit 1
+      fi
+      #uninstalls the current ML installation, should probably ask if user wants to capture or update before proceeding
+      #TODO check if any running MarkLogic processes
+      if [ ! -z $keeping ]; then
+        if hasversion $keeping ; then
+          echo "\"$keeping\" already exists"
+          exit 1
+        fi
+        capture $keeping
+      fi
+      uninstall
+    else
+      echo "Did not detect an existing install of MarkLogic"
     fi
-    #uninstall
-    #need to forget about the installed server to make sure we can install previous versions
-    #pkgutil --forget com.marklogic.server
+    # this allows us to still use the prefpane and change current version without sudo later
+    mkdir -p $SOURCE/versions/.current
+    _user=$(who am i | awk '{print $1}')
+    _group=$(id -g $_user)
+    chown -R $_user:$_group $SOURCE/versions/
+    ln -s $SOURCE/versions/.current/ ~/Library/StartupItems/MarkLogic
+
+    echo "Ready to manage MarkLogic versions with mlvm."
+    echo "Use 'mlvm list' to see installed versions"
+    echo "Use 'mlvm install <version_name> <dmg_file>' to install a version"
+    echo "Use 'mlvm use <version_name>' to switch to an installed version"
+    echo "Use 'mlvm remove <version_name>' to remove an installed version (not recoverable)"
     ;;
 
   *) 
