@@ -75,11 +75,13 @@ uninstall() {
 
 capture() {
   echo "Keeping current installation as $1"
-  mkdir -p $SOURCE/versions/$1/StartupItems
+  vdir=$(versiondir $1)
+  mkdir -p $vdir/StartupItems
+  mkdir -p $vdir/PreferencePanes
   cp -a ~/Library/MarkLogic $SOURCE/versions/$1/MarkLogic
   cp -a ~/Library/Application\ Support/MarkLogic $SOURCE/versions/$1/Support
   cp -a ~/Library/StartupItems/MarkLogic $SOURCE/versions/$1/StartupItems/MarkLogic
-  cp -a ~/Library/PreferencePanes/MarkLogic.prefPane $SOURCE/versions/$1/MarkLogic.prefPane
+  cp -a ~/Library/PreferencePanes/MarkLogic.prefPane $SOURCE/versions/$1/PreferencePanes/MarkLogic.prefPane
   # make sure everything is owned by this user
   _user=$(who am i | awk '{print $1}')
   _group=$(id -g $_user)
@@ -96,7 +98,7 @@ switchto() {
   vdir=$(versiondir $1)
   ln -s $vdir/MarkLogic ~/Library/MarkLogic
   ln -s $vdir/Support ~/Library/Application\ Support/MarkLogic
-  ln -s $vdir/MarkLogic.prefPane ~/Library/PreferencePanes/MarkLogic.prefPane
+  ln -s $vdir/PreferencePanes/* ~/Library/PreferencePanes/
   # current version links for startup commands
   ln -s $vdir/StartupItems/MarkLogic/* $SOURCE/versions/.current
 }
@@ -109,10 +111,10 @@ isactive() {
 }
 
 startServer() {
-  ~/Library/StartupItems/MarkLogic/MarkLogic start
+  $SOURCE/versions/.current/MarkLogic start
 }
 stopServer() {
-  ~/Library/StartupItems/MarkLogic/MarkLogic stop
+  $SOURCE/versions/.current/MarkLogic stop
 }
 
 case "$1" in 
@@ -162,6 +164,7 @@ case "$1" in
     echo "Extracting contents"
     tar xfz $mpoint/*.pkg/Contents/Archive.pax.gz -C $vdir
     mkdir -p $vdir/Support/Data
+    chmod +x $vdir/StartupItems/MarkLogic/MarkLogic
     echo "cleaning up"
     hdiutil detach $mpoint -quiet
     rm -fr $mpoint
