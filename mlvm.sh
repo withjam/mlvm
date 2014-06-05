@@ -10,16 +10,31 @@ SOURCE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 mkdir -p $SOURCE/versions
 cd $SOURCE/versions
+
 # current MarkLogic symlink
 sym=$(readlink ~/Library/MarkLogic)
+# flags
+forcing=false
 
-while getopts :fk opt; do
+while getopts :k: opt; do
   case $opt in
-    f) echo 'forcing version # in case of conflict' ;;
-    k) echo keeping existing data ;;
+    f) forcing=true ;;
+    k) keeping=$OPTARG ;;
   esac
 done
 shift $((OPTIND-1))
+
+versiondir() {
+  echo "$SOURCE/versions/$1"
+}
+
+hasversion() {
+  vdir=$(versiondir $1)
+  if [ ! -d $vdir ]; then
+    return 1
+  fi
+  return 0
+}
 
 uninstall() {
   echo "uninstalling default MarkLogic"
@@ -32,13 +47,12 @@ uninstall() {
 }
 
 capture() {
-  echo "capturing current installation as $1"
-  mkdir -p $SOURCE/versions/$1
-  cp -r ~/Library/Application\ Support/MarkLogic/Data $SOURCE/versions/$1/Data
-  cp -r ~/Library/MarkLogic $SOURCE/versions/$1/Program
-  cp -r ~/Library/Application\ Support/MarkLogic $SOURCE/versions/$1/Support
+  echo "keeping current installation as $1"
+  mkdir -p $SOURCE/versions/$1/Support
+  cp -r ~/Library/MarkLogic $SOURCE/versions/$1/MarkLogic
+  cp -r ~/Library/Application\ Support/MarkLogic/* $SOURCE/versions/$1/Support
   cp -r ~/Library/StartupItems/MarkLogic $SOURCE/versions/$1/StartupItems
-  cp -r ~/Library/PreferencePanes/MarkLogic.prefPane $SOURCE/versions/$1/PrefPane
+  cp -r ~/Library/PreferencePanes/MarkLogic.prefPane $SOURCE/versions/$1/MarkLogic.prefPane
 }
 
 # returns the PID of the running MarkLogic process, if there is one
@@ -62,7 +76,7 @@ case "$1" in
 
   # syntax:  mlvm list
   list)
-    echo "Available MarkLogic Versions:"
+    echo "Installed MarkLogic Versions:"
     for file in *; do
       mark='-'
       if isactive $file ; then
@@ -111,22 +125,60 @@ case "$1" in
 
   # syntax: mlvm remove <version_name>
   remove)
-    vdir=$SOURCE/versions/$2
-    if [ ! -d $vdir ]; then
-      echo "$2 is not installed"
+    if [ -z $2 ]; then
+      echo "usage: mlvm remove <version_name>"
+      echo "use 'mlvm list' to see a list of available versions"
       exit 1
     fi
+    vdir=$SOURCE/versions/$2
+    if [ ! -d $vdir ]; then
+      echo "\"$2\" is not installed"
+      exit 1
+    fi
+    if $(isactive $2) ; then
+      echo "\"$2\" is the active version.  Use -f to force an uninstall or 'mlvm use <version_name>' to use a different version before removing \"$2\"."
+      exit 1
+    fi
+    rm -fr $SOURCE/versions/$2
+    echo "removed \"$2\""
     ;;
 
-  # syntax: mlvm prepare [-k <version_name>]
+  stop)
+    ~/Library/StartupItems/MarkLogic/MarkLogic stop
+    ;;
+
+  start)
+    ~/Library/StartupItems/MarkLogic/MarkLogic start
+    ;;
+
+  status)
+    if [ -z $sym]; then
+      echo 'You are not currently using mlvm.'
+      echo
+      echo "Run 'mlvm install <version_name> <dmg_file>' to install a new version. (Note: this will remove an existing installation made without mlvm)"
+      echo
+      echo "If you have previously installed a version of MarkLogic, FIRST run 'mlvm -k <version_name> prepare' to retain it along with future mlvm installations. Otherwise it will be replaced and data will be lost."      
+      exit 1
+    fi
+    echo "Active ML version: $(basename $sym)"
+    ;;
+
+  # syntax: mlvm [-k <version_name>] prepare
   prepare) # prepares for use of mlvm by uninstalling existing MarkLogic, can optionally back up your existing install as a version
     #TODO requires sudo
     #uninstalls the current ML installation, should probably ask if user wants to capture or update before proceeding
     #TODO warn user
     #TODO check if any running MarkLogic processes
-    uninstall
+    if [ ! -z $keeping ]; then
+      if hasversion $keeping ; then
+        echo "\"$keeping\" already exists"
+        exit 1
+      fi
+      capture $keeping
+    fi
+    #uninstall
     #need to forget about the installed server to make sure we can install previous versions
-    pkgutil --forget com.marklogic.server
+    #pkgutil --forget com.marklogic.server
     ;;
 
   *) 
