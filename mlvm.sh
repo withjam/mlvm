@@ -67,6 +67,7 @@ hasversion() {
 
 uninstall() {
   echo "Uninstalling conventional MarkLogic"
+  ~/Library/StartupItems/MarkLogic stop
   rm -fr ~/Library/MarkLogic
   rm -fr ~/Library/Application\ Support/MarkLogic
   rm -fr ~/Library/StartupItems/MarkLogic 
