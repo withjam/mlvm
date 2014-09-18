@@ -164,7 +164,7 @@ case "$1" in
     mpoint=$SOURCE/.mounts/$mpoint
     echo "Mounting dmg"
     mkdir -p $mpoint
-    hdiutil attach $3 -nobrowse -quiet -mountpoint $mpoint
+    hdiutil attach $3 -nobrowse -mountpoint $mpoint
     mkdir -p $vdir
     echo "Extracting contents"
     tar xfz $mpoint/*.pkg/Contents/Archive.pax.gz -C $vdir
