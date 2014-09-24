@@ -259,6 +259,23 @@ case "$1" in
     echo "Use 'mlvm remove <version_name>' to remove an installed version (not recoverable)"
     ;;
 
+  clone)
+    if [ -z $2 ] || [ -z $3 ]; then
+      echo 'Usage: mlvm clone <version> <as>'
+      exit 1;
+    fi
+    if ! hasversion $2 ; then
+      echo There is no version $2 to clone.
+      exit 1;
+    fi
+    if hasversion $3 ; then
+      echo You already have a version $3 - cannot clone.
+      exit 1;
+    fi
+    echo Cloning $2 to $3
+    cp -r $2 $3
+    ;;
+
   *) 
     echo "usage: mlvm [list, use (version), prepare, capture (version)]"
     exit 1
