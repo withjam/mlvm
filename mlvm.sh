@@ -21,15 +21,15 @@
 #
 # To install a new version you must:
 #   - download a valid .dmg installer file
-#   - execute: mlvm install <version_name> <path to your .dmg installer>
+#   - execute: mlvm install <path to your .dmg installer> [<version_name>] - if no version_name is supplied it will derive one from the file name
 #
-#   For example:  mlvm install 7.0.2.3 ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg
+#   For example:  mlvm install ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg 7.0.2.3
 #   The version name you give it will uniquely identify it in your list and must be a valid directory name.  You can have multiples of the same MarkLogic server version as long as you give them each unique version names when installing via MLVM
 #
 #
 # Author: Matt Pileggi <Matt.Pileggi@marklogic.com>
 # Contributors:  Justin Makeig <justin.makeig@marklogic.com>, Paxton Hare <Paxton.Hare@marklogic.com>
-version=1.1
+version=1.2
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -105,7 +105,7 @@ switchto() {
 }
 
 isactive() {
-  if [ ! -z $sym ] && [ $(basename $(dirname $sym)) = $1 ]; then
+  if [ -n $sym ] && [ $(basename $(dirname $sym)) = $1 ]; then
     return 0
   fi
   return 1
@@ -154,9 +154,19 @@ case "$1" in
   # syntax:  mlvm install <version_name> <dmg_file>
   install) #installs a new .dmg version of ML
     #TODO download automatically, for now it requires the path to a previously downloaded .dmg
-    vdir=$(versiondir $2)
+    if [ -z $2 ]; then
+      echo usage: 'mlvm install <dmg_file> [<version_name>]'
+      exit 1
+    fi
+    vname=$( basename $2 | sed 's/MarkLogic-//' | sed 's/-x86.*$//' | sed 's/-amd64.*$//' )
+    echo $vname
+    if [ "$#" -eq 3 ]; then
+      vname=$3
+    fi
+    echo $vname
+    vdir=$(versiondir $vname)
     if [ -d $vdir ]; then
-      echo "$2 is already installed"
+      echo "$vname is already installed"
       exit 1
     fi
     # mount the dmg
@@ -164,7 +174,7 @@ case "$1" in
     mpoint=$SOURCE/.mounts/$mpoint
     echo "Mounting dmg"
     mkdir -p $mpoint
-    hdiutil attach $3 -nobrowse -mountpoint $mpoint
+    hdiutil attach $2 -nobrowse -mountpoint $mpoint
     mkdir -p $vdir
     echo "Extracting contents"
     tar xfz $mpoint/*.pkg/Contents/Archive.pax.gz -C $vdir
@@ -207,13 +217,13 @@ case "$1" in
     if [ ! -d $SOURCE/versions/.current ]; then
       echo 'You are not currently using mlvm.'
       echo
-      echo "Run 'mlvm install <version_name> <dmg_file>' to install a new version. (Note: this will remove an existing installation made without mlvm)"
+      echo "Run 'mlvm install <dmg_file> [<version_name>]' to install a new version. (Note: this will remove an existing installation made without mlvm)"
       echo
       echo "If you have previously installed a version of MarkLogic, FIRST run 'mlvm -k <version_name> prepare' to retain it along with future mlvm installations. Otherwise it will be replaced and data will be lost."      
       exit 1
     fi
     echo "mlvm version: $version"
-    if [ ! -z $sym ]; then
+    if [ -n $sym ]; then
       echo "Active ML version: $(basename $(dirname $sym))"
     fi
     ;;
@@ -234,7 +244,7 @@ case "$1" in
       fi
       #uninstalls the current ML installation, should probably ask if user wants to capture or update before proceeding
       #TODO check if any running MarkLogic processes
-      if [ ! -z $keeping ]; then
+      if [ -n $keeping ]; then
         if hasversion $keeping ; then
           echo "\"$keeping\" already exists"
           exit 1
@@ -254,7 +264,7 @@ case "$1" in
 
     echo "Ready to manage MarkLogic versions with mlvm."
     echo "Use 'mlvm list' to see installed versions"
-    echo "Use 'mlvm install <version_name> <dmg_file>' to install a version"
+    echo "Use 'mlvm install <dmg_file> [<version_name>]' to install a version"
     echo "Use 'mlvm use <version_name>' to switch to an installed version"
     echo "Use 'mlvm remove <version_name>' to remove an installed version (not recoverable)"
     ;;
