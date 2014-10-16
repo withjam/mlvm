@@ -158,15 +158,32 @@ case "$1" in
       echo "$2 is already installed"
       exit 1
     fi
+    
     # mount the dmg
+    DMG="$3"
     mpoint=$(date +%s)$RANDOM
-    mpoint=$SOURCE/.mounts/$mpoint
-    echo "Mounting dmg"
-    mkdir -p $mpoint
-    hdiutil attach $3 -nobrowse -quiet -mountpoint $mpoint
-    mkdir -p $vdir
-    echo "Extracting contents"
-    tar xfz $mpoint/*.pkg/Contents/Archive.pax.gz -C $vdir
+    mpoint=$SOURCE/.mounts/"$mpoint"
+    mkdir -p "$mpoint"
+    
+    echo "Mounting $DMG to $mpoint"
+    hdiutil attach "$DMG" -mountpoint "$mpoint" -nobrowse -quiet
+
+    # <http://dxr.mozilla.org/mozilla-central/source/build/package/mac_osx/unpack-diskimage>
+    TIMEOUT=15
+    i=0
+    while [ "$(echo $mpoint/*)" == "$mpoint/*" ]; do
+        if [ $i -gt $TIMEOUT ]; then
+            echo "No files found, exiting"
+            exit 1
+        fi
+        ls -la "$mpoint"
+        sleep 1
+        i=$(expr $i + 1)
+    done
+
+    mkdir -p "$vdir"
+    tar xfz "$mpoint"/*.pkg/Contents/Archive.pax.gz -C "$vdir"
+    
     mkdir -p $vdir/Support/Data
     chmod +x $vdir/StartupItems/MarkLogic/MarkLogic
     echo "cleaning up"
