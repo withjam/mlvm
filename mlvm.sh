@@ -104,7 +104,7 @@ switchto() {
 }
 
 isactive() {
-  if [ ! -z $sym ] && [ $(basename $(dirname $sym)) = $1 ]; then
+  if [[ ! -z $sym ]] && [[ $(basename $(dirname $sym)) = $1 ]]; then
     return 0
   fi
   return 1
