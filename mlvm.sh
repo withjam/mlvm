@@ -276,8 +276,8 @@ case "$1" in
     ;;
   
   init)
-    HOST="$2"
-    ADMINUSER=admin
+    HOST=${2:-localhost}
+    ADMINUSER=${3:-admin}
 
     unset ADMINPASSWORD
     prompt="Enter password for admin user, $ADMINUSER: "
