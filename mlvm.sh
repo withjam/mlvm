@@ -307,11 +307,11 @@ case "$1" in
         exit 1
     fi
     echo "Completed initialization. Waiting for restart…"
-    sleep 5
 
     # curl -fsS --head --digest --user admin:"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp
     # One liner: until curl -fsS --head http://192.168.56.101:8001/admin/v1/timestamp --digest --user admin:admin; do sleep 5; done
-
+    
+    sleep 3
     until curl -fsS --head --digest --user "$ADMINUSER":"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp &>/dev/null
     do
       echo "Restart hasn't completed. Retrying in 3 seconds…"
@@ -330,7 +330,7 @@ case "$1" in
     fi
 
     echo "Completed instance administration. Waiting for restart…"
-    sleep 10
+    sleep 3
     until curl -fsS --head --digest --user admin:"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp &>/dev/null
     do
       echo "Restart hasn't completed. Retrying in 3 seconds…"
