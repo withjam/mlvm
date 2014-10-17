@@ -323,8 +323,7 @@ case "$1" in
     curl --fail --show-error --silent \
       -X POST -H "Content-type: application/x-www-form-urlencoded" \
       --data "admin-username=${ADMINUSER}" --data "admin-password=${ADMINPASSWORD}" --data "realm=public" \
-      http://"$HOST":8001/admin/v1/instance-admin 
-      # 1>/dev/null
+      http://"$HOST":8001/admin/v1/instance-admin 1>/dev/null
     if [[ $? != 0 ]] ; then
         echo "Error on instance-admin"
         exit 1
