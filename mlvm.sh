@@ -151,7 +151,7 @@ case "$1" in
     startServer
     ;;
 
-  # syntax:  mlvm install <version_name> <dmg_file>
+  # syntax:  mlvm install  <dmg_file> [optional version_name]
   install) #installs a new .dmg version of ML
     #TODO download automatically, for now it requires the path to a previously downloaded .dmg
     if [ -z $2 ]; then
@@ -287,7 +287,7 @@ case "$1" in
     ;;
 
   *) 
-    echo "usage: mlvm [list, use (version), prepare, capture (version)]"
+    echo "usage: mlvm [list, use (version), prepare, capture (version), install <path_to_dmg> [optional version name], clone (version)]"
     exit 1
 
 esac 
