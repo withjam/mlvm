@@ -347,6 +347,30 @@ case "$1" in
     echo "Initialization completed"
     ;;
   
+  # mlvm download ver [--nightly [20150101]] [--user user]
+  #   mlvm download -> latest version from DMC returns version string
+  #   mlvm download 7.0 -> latest patch of 7.0 from DMC
+  #   mlvm download 33 -> error
+  #   mlvm download 8.0 --nightly -> latest nightly from RMC/nightly
+  #   mlvm download 8.0 --nightly 20115010 -> specific nightly from RMC
+  download)
+    if [ -z "$3" ]
+    then
+        NIGHTLY=`date "+%Y%m%d"`
+    else
+        NIGHTLY="$3"
+    fi
+
+    VER="$2"-"$NIGHTLY"
+    
+    # TODO: Nightly
+    URL=https://root.marklogic.com/nightly/builds/macosx-64/osx-intel64-80-build.marklogic.com/HEAD/pkgs."$NIGHTLY"/MarkLogic-"$VER"-x86_64.dmg
+    echo "$URL"
+    ME=${4:-"$USER"}    
+    curl "$URL" -o "$PWDSTART"/MarkLogic-"$VER"-x86_64.dmg --basic --user "$ME" --insecure
+    echo "$VER"
+  ;;
+  
   *) 
     echo "usage: mlvm [list, use (version), prepare, capture (version)]"
     exit 1
