@@ -31,7 +31,7 @@
 
 For example:  
 
-    mlvm install ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg 7.0.2.3
+    mlvm install 7.0.2.3 ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg
    
 The version name you give it will uniquely identify it in your list and must be a valid directory name.  You can have multiples of the same MarkLogic server version as long as you give them each unique version names when installing via MLVM
 
