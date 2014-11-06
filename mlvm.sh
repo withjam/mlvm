@@ -31,6 +31,9 @@
 # Contributors:  Justin Makeig <justin.makeig@marklogic.com>, Paxton Hare <Paxton.Hare@marklogic.com>
 version=1.1
 
+# Cache the original pwd
+PWDSTART=`pwd`
+
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
@@ -365,9 +368,13 @@ case "$1" in
     
     # TODO: Nightly
     URL=https://root.marklogic.com/nightly/builds/macosx-64/osx-intel64-80-build.marklogic.com/HEAD/pkgs."$NIGHTLY"/MarkLogic-"$VER"-x86_64.dmg
-    echo "$URL"
+    #echo "$URL"
     ME=${4:-"$USER"}    
-    curl "$URL" -o "$PWDSTART"/MarkLogic-"$VER"-x86_64.dmg --basic --user "$ME" --insecure
+    #echo "$PWDSTART"
+    curl "$URL" -o "$PWDSTART"/MarkLogic-"$VER"-x86_64.dmg --basic --user "$ME" --insecure --fail
+    if [[ $? != 0 ]] ; then
+      exit 1
+    fi
     echo "$VER"
   ;;
   
