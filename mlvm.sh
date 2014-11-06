@@ -182,15 +182,32 @@ case "$1" in
       echo "$vname is already installed"
       exit 1
     fi
+    
     # mount the dmg
+    DMG="$3"
     mpoint=$(date +%s)$RANDOM
-    mpoint=$SOURCE/.mounts/$mpoint
-    echo "Mounting dmg"
-    mkdir -p $mpoint
-    hdiutil attach $2 -nobrowse -mountpoint $mpoint
-    mkdir -p $vdir
-    echo "Extracting contents"
-    tar xfz $mpoint/*.pkg/Contents/Archive.pax.gz -C $vdir
+    mpoint=$SOURCE/.mounts/"$mpoint"
+    mkdir -p "$mpoint"
+    
+    echo "Mounting $DMG to $mpoint"
+    hdiutil attach "$DMG" -mountpoint "$mpoint" -nobrowse -quiet
+
+    # <http://dxr.mozilla.org/mozilla-central/source/build/package/mac_osx/unpack-diskimage>
+    TIMEOUT=15
+    i=0
+    while [ "$(echo $mpoint/*)" == "$mpoint/*" ]; do
+        if [ $i -gt $TIMEOUT ]; then
+            echo "No files found, exiting"
+            exit 1
+        fi
+        ls -la "$mpoint"
+        sleep 1
+        i=$(expr $i + 1)
+    done
+
+    mkdir -p "$vdir"
+    tar xfz "$mpoint"/*.pkg/Contents/Archive.pax.gz -C "$vdir"
+    
     mkdir -p $vdir/Support/Data
     chmod +x $vdir/StartupItems/MarkLogic/MarkLogic
     echo "cleaning up"
@@ -298,9 +315,75 @@ case "$1" in
     echo Cloning $2 to $3
     cp -r $2 $3
     ;;
+  
+  init)
+    HOST="$2"
+    ADMINUSER=admin
 
+    unset ADMINPASSWORD
+    prompt="Enter password for admin user, $ADMINUSER: "
+    while IFS= read -p "$prompt" -r -s -n 1 char
+    do
+        if [[ $char == $'\0' ]]
+        then
+            break
+        fi
+        prompt='*'
+        ADMINPASSWORD+="$char"
+    done
+    #echo "$ADMINPASSWORD"
+    echo ""
+
+    curl -fsS --head --digest --user "$ADMINUSER":"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp &>/dev/null
+    if [[ $? != 0 ]] ; then
+        echo "Couldn't reach ${HOST}"
+        exit 1
+    fi
+
+    # curl -X POST --data "" http://"$HOST":8001/admin/v1/init
+    echo "Initializing…"
+    curl --fail --show-error --silent -X POST --data "" http://"$HOST":8001/admin/v1/init 1>/dev/null
+    if [[ $? != 0 ]] ; then
+        echo "error on init"
+        exit 1
+    fi
+    echo "Completed initialization. Waiting for restart…"
+    sleep 5
+
+    # curl -fsS --head --digest --user admin:"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp
+    # One liner: until curl -fsS --head http://192.168.56.101:8001/admin/v1/timestamp --digest --user admin:admin; do sleep 5; done
+
+    until curl -fsS --head --digest --user "$ADMINUSER":"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp &>/dev/null
+    do
+      echo "Restart hasn't completed. Retrying in 3 seconds…"
+      sleep 3
+    done
+
+    # curl -X POST -H "Content-type: application/x-www-form-urlencoded" --data "admin-username=admin" --data "admin-password=********" http://localhost:8001/admin/v1/instance-admin
+    echo "Starting instance administration…"
+    curl --fail --show-error --silent \
+      -X POST -H "Content-type: application/x-www-form-urlencoded" \
+      --data "admin-username=${ADMINUSER}" --data "admin-password=${ADMINPASSWORD}" --data "realm=public" \
+      http://"$HOST":8001/admin/v1/instance-admin 
+      # 1>/dev/null
+    if [[ $? != 0 ]] ; then
+        echo "Error on instance-admin"
+        exit 1
+    fi
+
+    echo "Completed instance administration. Waiting for restart…"
+    sleep 10
+    until curl -fsS --head --digest --user admin:"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp &>/dev/null
+    do
+      echo "Restart hasn't completed. Retrying in 3 seconds…"
+      sleep 3
+    done
+
+    echo "Done!"  
+    ;;
+  
   *) 
-    echo "usage: mlvm [list, use (version), prepare, capture (version), install <path_to_dmg> [optional version name], clone (version)]"
+    echo "usage: mlvm [list, use (version), prepare, capture (version), install <path_to_dmg> [optional version name], init, clone (version)]"
     exit 1
 
 esac 
