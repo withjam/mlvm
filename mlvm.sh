@@ -184,7 +184,7 @@ case "$1" in
     fi
     
     # mount the dmg
-    DMG="$3"
+    DMG="$2"
     mpoint=$(date +%s)$RANDOM
     mpoint=$SOURCE/.mounts/"$mpoint"
     mkdir -p "$mpoint"
