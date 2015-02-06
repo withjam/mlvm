@@ -185,6 +185,14 @@ case "$1" in
 
     # mount the dmg
     DMG="$2"
+
+    if [ ! -f $DMG ];
+    then
+       echo "$DMG not found. Please use a fully qualified path to the installer file."
+       echo "(cwd is $SOURCE/versions)"
+       exit 1
+    fi
+
     mpoint=$(date +%s)$RANDOM
     mpoint=$SOURCE/.mounts/"$mpoint"
     mkdir -p "$mpoint"
