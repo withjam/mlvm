@@ -14,13 +14,13 @@
 # limitations under the License.
 #
 # Version Manager for using multiple versions of MarkLogic without using VMs or port numbers.  Note: only one version can be active at a time.
-# 
+#
 # Currently this script can:
 #    - install new versions (from a .dmg file on the local machine)
 #    - capture an existing install to continue use with MLVM
 #    - switch versions while maintaining data
 #    - remove unused versions
-# 
+#
 # Since 1.1:  This script supports MacOSX.  This script supports use of the Preference Pane for starting/stopping the server (can also use mlvm start/stop)
 #
 # Recommended installation on a Mac:
@@ -83,7 +83,7 @@ uninstall() {
   ~/Library/StartupItems/MarkLogic stop
   rm -fr ~/Library/MarkLogic
   rm -fr ~/Library/Application\ Support/MarkLogic
-  rm -fr ~/Library/StartupItems/MarkLogic 
+  rm -fr ~/Library/StartupItems/MarkLogic
   rm -fr ~/Library/PreferencePanes/MarkLogic.prefPane
 }
 
@@ -131,7 +131,7 @@ stopServer() {
   $SOURCE/versions/.current/MarkLogic stop
 }
 
-case "$1" in 
+case "$1" in
 
   # syntax:  mlvm list
   list)
@@ -151,7 +151,7 @@ case "$1" in
       echo "You have not yet prepared your environment to use MLVM.  Please execute: mlvm prepare first"
       exit 1
     fi
-    if [ "$#" -ne 2 ]; then 
+    if [ "$#" -ne 2 ]; then
       echo "You must specify which version to use.  'mlvm list' to see available versions"
       exit 1
     fi
@@ -182,13 +182,13 @@ case "$1" in
       echo "$vname is already installed"
       exit 1
     fi
-    
+
     # mount the dmg
     DMG="$2"
     mpoint=$(date +%s)$RANDOM
     mpoint=$SOURCE/.mounts/"$mpoint"
     mkdir -p "$mpoint"
-    
+
     echo "Mounting $DMG to $mpoint"
     hdiutil attach "$DMG" -mountpoint "$mpoint" -nobrowse -quiet
 
@@ -207,7 +207,7 @@ case "$1" in
 
     mkdir -p "$vdir"
     tar xfz "$mpoint"/*.pkg/Contents/Archive.pax.gz -C "$vdir"
-    
+
     mkdir -p $vdir/Support/Data
     chmod +x $vdir/StartupItems/MarkLogic/MarkLogic
     echo "cleaning up"
@@ -249,7 +249,7 @@ case "$1" in
       echo
       echo "Run 'mlvm install <dmg_file> [<version_name>]' to install a new version. (Note: this will remove an existing installation made without mlvm)"
       echo
-      echo "If you have previously installed a version of MarkLogic, FIRST run 'mlvm -k <version_name> prepare' to retain it along with future mlvm installations. Otherwise it will be replaced and data will be lost."      
+      echo "If you have previously installed a version of MarkLogic, FIRST run 'mlvm -k <version_name> prepare' to retain it along with future mlvm installations. Otherwise it will be replaced and data will be lost."
       exit 1
     fi
     echo "mlvm version: $version"
@@ -315,7 +315,7 @@ case "$1" in
     echo Cloning $2 to $3
     cp -r $2 $3
     ;;
-  
+
   init)
     HOST="$2"
     ADMINUSER=admin
@@ -364,7 +364,7 @@ case "$1" in
     curl --fail --show-error --silent \
       -X POST -H "Content-type: application/x-www-form-urlencoded" \
       --data "admin-username=${ADMINUSER}" --data "admin-password=${ADMINPASSWORD}" --data "realm=public" \
-      http://"$HOST":8001/admin/v1/instance-admin 
+      http://"$HOST":8001/admin/v1/instance-admin
       # 1>/dev/null
     if [[ $? != 0 ]] ; then
         echo "Error on instance-admin"
@@ -379,11 +379,11 @@ case "$1" in
       sleep 3
     done
 
-    echo "Done!"  
+    echo "Done!"
     ;;
-  
-  *) 
+
+  *)
     echo "usage: mlvm [list, use (version), prepare, capture (version), install <path_to_dmg> [optional version name], init, clone (version)]"
     exit 1
 
-esac 
+esac
