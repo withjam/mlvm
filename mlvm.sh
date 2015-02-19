@@ -157,12 +157,13 @@ case "$1" in
   # syntax:  mlvm list
   list)
     echo "Installed MarkLogic Versions:"
-    for file in *; do
+    for file in $SOURCE/versions/*; do
+      file=`basename "$file"`
       mark='-'
       if isactive $file ; then
         mark='*'
       fi
-      test -d "$file" && echo "$mark $file"
+      test -d "$SOURCE/versions/$file" && echo "$mark $file"
     done
     ;;
 
@@ -420,6 +421,7 @@ case "$1" in
     echo "  init              - init a new instance, if you cannot use a browser"
     echo "  clone [version] [as]"
     echo '                    - clone an existing <version>, with the new name <as>'
+    echo '  remove [version]  - delete <version> from your system (including data!)'
     exit 1
 
 esac 
