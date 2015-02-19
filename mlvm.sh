@@ -206,6 +206,15 @@ case "$1" in
     
     # mount the dmg
     DMG="$2"
+    case "$DMG" in
+      /*)
+        # the path is absolute, do nothing and continue
+        ;;
+      *)
+        echo "The path to the DMG file must be absolute: it must start with '/'."
+        exit 1
+        ;;
+    esac
     mpoint=$(date +%s)$RANDOM
     mpoint=$SOURCE/.mounts/"$mpoint"
     mkdir -p "$mpoint"
