@@ -74,7 +74,7 @@ done
 SOURCE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 mkdir -p $SOURCE/versions
-cd $SOURCE/versions
+# cd $SOURCE/versions
 
 # current MarkLogic symlink
 sym=$(readlink ~/Library/MarkLogic)
@@ -206,21 +206,12 @@ case "$1" in
     
     # mount the dmg
     DMG="$2"
-    case "$DMG" in
-      /*)
-        # the path is absolute, do nothing and continue
-        ;;
-      *)
-        echo "The path to the DMG file must be absolute: it must start with '/'."
-        exit 1
-        ;;
-    esac
     mpoint=$(date +%s)$RANDOM
     mpoint=$SOURCE/.mounts/"$mpoint"
     mkdir -p "$mpoint"
     
     echo "Mounting $DMG to $mpoint"
-    hdiutil attach "$DMG" -mountpoint "$mpoint" -nobrowse -quiet
+    hdiutil attach -mountpoint "$mpoint" -nobrowse -quiet "$DMG"
 
     # <http://dxr.mozilla.org/mozilla-central/source/build/package/mac_osx/unpack-diskimage>
     TIMEOUT=15
@@ -230,7 +221,8 @@ case "$1" in
             echo "No files found, exiting"
             exit 1
         fi
-        ls -la "$mpoint"
+        # ls -la "$mpoint"
+        echo "Waiting for DMG to be mounted"
         sleep 1
         i=$(expr $i + 1)
     done
