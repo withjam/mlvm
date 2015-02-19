@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Version Manager for using multiple versions of MarkLogic without using VMs or port numbers.  Note: only one version can be active at a time.
+# Version Manager for using multiple versions of MarkLogic without
+# using VMs or port numbers.  Note: only one version can be active at
+# a time.
 # 
 # Currently this script can:
 #    - install new versions (from a .dmg file on the local machine)
@@ -21,23 +23,39 @@
 #    - switch versions while maintaining data
 #    - remove unused versions
 # 
-# Since 1.1:  This script supports MacOSX.  This script supports use of the Preference Pane for starting/stopping the server (can also use mlvm start/stop)
+# Since 1.1: This script supports MacOSX.  This script supports use of
+# the Preference Pane for starting/stopping the server (can also use
+# mlvm start/stop)
 #
 # Recommended installation on a Mac:
-#   -  clone the repository somewhere (git clone git@github.com:withjam/mlvm.git)
-#   -  create an alias in your bash profile for mlvm.sh like alias mlvm="<cloned project dir>/mlvm.sh"
-#   -  create an alias in your bash profile for sudo if you don't have one already:  alias sudo='sudo '
-#   -  if you have an existing ML install that you want to keep, execute: mlvm -k <version_number> prepare
-#   -  if you have an existing ML install but don't care to keep it, execute: mlvm -f prepare
-#   -  if you have no existing ML install execute: mlvm prepare (note: prepare command requires root privileges, so may require run as sudo)
+#   -  clone the repository somewhere (git clone
+#      git@github.com:withjam/mlvm.git)
+#   -  create an alias in your bash profile for mlvm.sh like alias
+#      mlvm="<cloned project dir>/mlvm.sh"
+#   -  create an alias in your bash profile for sudo if you don't have
+#      one already: alias sudo='sudo '
+#   -  if you have an existing ML install that you want to keep,
+#      execute: mlvm -k <version_number> prepare
+#   -  if you have an existing ML install but don't care to keep it,
+#      execute: mlvm -f prepare
+#   -  if you have no existing ML install execute: mlvm prepare (note:
+#      prepare command requires root privileges, so may require run as
+#      sudo)
 #   -  execute: mlvm list to see available versions
 #
 # To install a new version you must:
 #   - download a valid .dmg installer file
-#   - execute: mlvm install <path to your .dmg installer> [<version_name>] - if no version_name is supplied it will derive one from the file name
+#   - execute: mlvm install <path to your .dmg installer>
+#     [<version_name>] - if no version_name is supplied it will derive
+#     one from the file name
 #
-#   For example:  mlvm install ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg 7.0.2.3
-#   The version name you give it will uniquely identify it in your list and must be a valid directory name.  You can have multiples of the same MarkLogic server version as long as you give them each unique version names when installing via MLVM
+#   For example: mlvm install ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg
+#   7.0.2.3
+#
+#   The version name you give it will uniquely identify it in your
+#   list and must be a valid directory name.  You can have multiples
+#   of the same MarkLogic server version as long as you give them each
+#   unique version names when installing via MLVM
 #
 #
 # Author: Matt Pileggi <Matt.Pileggi@marklogic.com>
@@ -45,10 +63,13 @@
 version=1.2
 
 SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+# resolve $SOURCE until the file is no longer a symlink
+while [ -h "$SOURCE" ]; do
   DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
   SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+  # if $SOURCE was a relative symlink, we need to resolve it relative
+  # to the path where the symlink file was located
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 SOURCE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
