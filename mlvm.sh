@@ -404,7 +404,21 @@ case "$1" in
     ;;
   
   *) 
-    echo "usage: mlvm [list, use (version), prepare, capture (version), install <path_to_dmg> [optional version name], init, clone (version)]"
+    echo "usage: mlvm [command] [options]*"
+    echo ""
+    echo "Supported commands, and their respective options:"
+    echo "  [help]            - display this message"
+    echo "  list              - display all installed versions"
+    echo '  use [version]     - switch to using version <version>'
+    echo "  prepare           - prepare your system to use MLVM"
+    # TODO: This command was in the usage message, but does not seem
+    # to be implemented in the main loop over the commands.
+    echo '  capture [version] - capture an existing install to continue use with MLVM'
+    echo "  install [path_to_dmg] [version]"
+    echo '                    - install the MarkLogic in the DMG file as <version>'
+    echo "  init              - init a new instance, if you cannot use a browser"
+    echo "  clone [version] [as]"
+    echo '                    - clone an existing <version>, with the new name <as>'
     exit 1
 
 esac 
