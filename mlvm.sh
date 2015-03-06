@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Version Manager for using multiple versions of MarkLogic without using VMs or port numbers.  Note: only one version can be active at a time.
+# Version Manager for using multiple versions of MarkLogic without
+# using VMs or port numbers.  Note: only one version can be active at
+# a time.
 # 
 # Currently this script can:
 #    - install new versions (from a .dmg file on the local machine)
@@ -21,23 +23,39 @@
 #    - switch versions while maintaining data
 #    - remove unused versions
 # 
-# Since 1.1:  This script supports MacOSX.  This script supports use of the Preference Pane for starting/stopping the server (can also use mlvm start/stop)
+# Since 1.1: This script supports MacOSX.  This script supports use of
+# the Preference Pane for starting/stopping the server (can also use
+# mlvm start/stop)
 #
 # Recommended installation on a Mac:
-#   -  clone the repository somewhere (git clone git@github.com:withjam/mlvm.git)
-#   -  create an alias in your bash profile for mlvm.sh like alias mlvm="<cloned project dir>/mlvm.sh"
-#   -  create an alias in your bash profile for sudo if you don't have one already:  alias sudo='sudo '
-#   -  if you have an existing ML install that you want to keep, execute: mlvm -k <version_number> prepare
-#   -  if you have an existing ML install but don't care to keep it, execute: mlvm -f prepare
-#   -  if you have no existing ML install execute: mlvm prepare (note: prepare command requires root privileges, so may require run as sudo)
+#   -  clone the repository somewhere (git clone
+#      git@github.com:withjam/mlvm.git)
+#   -  create an alias in your bash profile for mlvm.sh like alias
+#      mlvm="<cloned project dir>/mlvm.sh"
+#   -  create an alias in your bash profile for sudo if you don't have
+#      one already: alias sudo='sudo '
+#   -  if you have an existing ML install that you want to keep,
+#      execute: mlvm -k <version_number> prepare
+#   -  if you have an existing ML install but don't care to keep it,
+#      execute: mlvm -f prepare
+#   -  if you have no existing ML install execute: mlvm prepare (note:
+#      prepare command requires root privileges, so may require run as
+#      sudo)
 #   -  execute: mlvm list to see available versions
 #
 # To install a new version you must:
 #   - download a valid .dmg installer file
-#   - execute: mlvm install <path to your .dmg installer> [<version_name>] - if no version_name is supplied it will derive one from the file name
+#   - execute: mlvm install <path to your .dmg installer>
+#     [<version_name>] - if no version_name is supplied it will derive
+#     one from the file name
 #
-#   For example:  mlvm install ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg 7.0.2.3
-#   The version name you give it will uniquely identify it in your list and must be a valid directory name.  You can have multiples of the same MarkLogic server version as long as you give them each unique version names when installing via MLVM
+#   For example: mlvm install ~/Downloads/MarkLogic-7.0-2.3-x86_64.dmg
+#   7.0.2.3
+#
+#   The version name you give it will uniquely identify it in your
+#   list and must be a valid directory name.  You can have multiples
+#   of the same MarkLogic server version as long as you give them each
+#   unique version names when installing via MLVM
 #
 #
 # Author: Matt Pileggi <Matt.Pileggi@marklogic.com>
@@ -45,15 +63,18 @@
 version=1.2
 
 SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+# resolve $SOURCE until the file is no longer a symlink
+while [ -h "$SOURCE" ]; do
   DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
   SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+  # if $SOURCE was a relative symlink, we need to resolve it relative
+  # to the path where the symlink file was located
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 SOURCE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 mkdir -p $SOURCE/versions
-cd $SOURCE/versions
+# cd $SOURCE/versions
 
 # current MarkLogic symlink
 sym=$(readlink ~/Library/MarkLogic)
@@ -136,12 +157,13 @@ case "$1" in
   # syntax:  mlvm list
   list)
     echo "Installed MarkLogic Versions:"
-    for file in *; do
+    for file in $SOURCE/versions/*; do
+      file=`basename "$file"`
       mark='-'
       if isactive $file ; then
         mark='*'
       fi
-      test -d "$file" && echo "$mark $file"
+      test -d "$SOURCE/versions/$file" && echo "$mark $file"
     done
     ;;
 
@@ -190,7 +212,7 @@ case "$1" in
     mkdir -p "$mpoint"
     
     echo "Mounting $DMG to $mpoint"
-    hdiutil attach "$DMG" -mountpoint "$mpoint" -nobrowse -quiet
+    hdiutil attach -mountpoint "$mpoint" -nobrowse -quiet "$DMG"
 
     # <http://dxr.mozilla.org/mozilla-central/source/build/package/mac_osx/unpack-diskimage>
     TIMEOUT=15
@@ -200,7 +222,8 @@ case "$1" in
             echo "No files found, exiting"
             exit 1
         fi
-        ls -la "$mpoint"
+        # ls -la "$mpoint"
+        echo "Waiting for DMG to be mounted"
         sleep 1
         i=$(expr $i + 1)
     done
@@ -383,7 +406,22 @@ case "$1" in
     ;;
   
   *) 
-    echo "usage: mlvm [list, use (version), prepare, capture (version), install <path_to_dmg> [optional version name], init, clone (version)]"
+    echo "usage: mlvm [command] [options]*"
+    echo ""
+    echo "Supported commands, and their respective options:"
+    echo "  [help]            - display this message"
+    echo "  list              - display all installed versions"
+    echo '  use [version]     - switch to using version <version>'
+    echo "  prepare           - prepare your system to use MLVM"
+    # TODO: This command was in the usage message, but does not seem
+    # to be implemented in the main loop over the commands.
+    echo '  capture [version] - capture an existing install to continue use with MLVM'
+    echo "  install [path_to_dmg] [version]"
+    echo '                    - install the MarkLogic in the DMG file as <version>'
+    echo "  init              - init a new instance, if you cannot use a browser"
+    echo "  clone [version] [as]"
+    echo '                    - clone an existing <version>, with the new name <as>'
+    echo '  remove [version]  - delete <version> from your system (including data!)'
     exit 1
 
 esac 
