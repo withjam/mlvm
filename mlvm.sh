@@ -340,8 +340,8 @@ case "$1" in
     ;;
   
   init)
-    HOST="$2"
-    ADMINUSER=admin
+    HOST=${2:-localhost}
+    ADMINUSER=${3:-admin}
 
     unset ADMINPASSWORD
     prompt="Enter password for admin user, $ADMINUSER: "
@@ -371,38 +371,44 @@ case "$1" in
         exit 1
     fi
     echo "Completed initialization. Waiting for restart…"
-    sleep 5
 
     # curl -fsS --head --digest --user admin:"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp
     # One liner: until curl -fsS --head http://192.168.56.101:8001/admin/v1/timestamp --digest --user admin:admin; do sleep 5; done
-
-    until curl -fsS --head --digest --user "$ADMINUSER":"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp &>/dev/null
+    
+    sleep 1
+    until curl -fsS \
+      --max-time 1 \
+      --head \
+      --digest --user "$ADMINUSER":"$ADMINPASSWORD" \
+      http://"$HOST":8001/admin/v1/timestamp &>/dev/null
     do
-      echo "Restart hasn't completed. Retrying in 3 seconds…"
-      sleep 3
+      echo "Retrying…"
+      sleep 2
     done
 
     # curl -X POST -H "Content-type: application/x-www-form-urlencoded" --data "admin-username=admin" --data "admin-password=********" http://localhost:8001/admin/v1/instance-admin
     echo "Starting instance administration…"
-    curl --fail --show-error --silent \
+    curl -fsS \
       -X POST -H "Content-type: application/x-www-form-urlencoded" \
       --data "admin-username=${ADMINUSER}" --data "admin-password=${ADMINPASSWORD}" --data "realm=public" \
-      http://"$HOST":8001/admin/v1/instance-admin 
-      # 1>/dev/null
+      http://"$HOST":8001/admin/v1/instance-admin 1>/dev/null
     if [[ $? != 0 ]] ; then
         echo "Error on instance-admin"
         exit 1
     fi
 
     echo "Completed instance administration. Waiting for restart…"
-    sleep 10
-    until curl -fsS --head --digest --user admin:"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp &>/dev/null
+    sleep 1
+    until curl -fsS \
+      --head \
+      --digest --user "$ADMINUSER":"$ADMINPASSWORD" \
+      --max-time 1 \
+      http://"$HOST":8001/admin/v1/timestamp &>/dev/null
     do
-      echo "Restart hasn't completed. Retrying in 3 seconds…"
-      sleep 3
+      echo "Retrying…"
+      sleep 2
     done
-
-    echo "Done!"  
+    echo "Initialization completed"
     ;;
   
   *) 
