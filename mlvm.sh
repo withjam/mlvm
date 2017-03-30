@@ -62,6 +62,9 @@
 # Contributors:  Justin Makeig <justin.makeig@marklogic.com>, Paxton Hare <Paxton.Hare@marklogic.com>
 version=1.2
 
+# Cache the original pwd
+PWDSTART=`pwd`
+
 SOURCE="${BASH_SOURCE[0]}"
 # resolve $SOURCE until the file is no longer a symlink
 while [ -h "$SOURCE" ]; do
@@ -340,8 +343,8 @@ case "$1" in
     ;;
   
   init)
-    HOST="$2"
-    ADMINUSER=admin
+    HOST=${2:-localhost}
+    ADMINUSER=${3:-admin}
 
     unset ADMINPASSWORD
     prompt="Enter password for admin user, $ADMINUSER: "
@@ -371,39 +374,73 @@ case "$1" in
         exit 1
     fi
     echo "Completed initialization. Waiting for restart…"
-    sleep 5
 
     # curl -fsS --head --digest --user admin:"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp
     # One liner: until curl -fsS --head http://192.168.56.101:8001/admin/v1/timestamp --digest --user admin:admin; do sleep 5; done
-
-    until curl -fsS --head --digest --user "$ADMINUSER":"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp &>/dev/null
+    
+    sleep 1
+    until curl -fsS \
+      --max-time 1 \
+      --head \
+      --digest --user "$ADMINUSER":"$ADMINPASSWORD" \
+      http://"$HOST":8001/admin/v1/timestamp &>/dev/null
     do
-      echo "Restart hasn't completed. Retrying in 3 seconds…"
-      sleep 3
+      echo "Retrying…"
+      sleep 2
     done
 
     # curl -X POST -H "Content-type: application/x-www-form-urlencoded" --data "admin-username=admin" --data "admin-password=********" http://localhost:8001/admin/v1/instance-admin
     echo "Starting instance administration…"
-    curl --fail --show-error --silent \
+    curl -fsS \
       -X POST -H "Content-type: application/x-www-form-urlencoded" \
       --data "admin-username=${ADMINUSER}" --data "admin-password=${ADMINPASSWORD}" --data "realm=public" \
-      http://"$HOST":8001/admin/v1/instance-admin 
-      # 1>/dev/null
+      http://"$HOST":8001/admin/v1/instance-admin 1>/dev/null
     if [[ $? != 0 ]] ; then
         echo "Error on instance-admin"
         exit 1
     fi
 
     echo "Completed instance administration. Waiting for restart…"
-    sleep 10
-    until curl -fsS --head --digest --user admin:"$ADMINPASSWORD" http://"$HOST":8001/admin/v1/timestamp &>/dev/null
+    sleep 1
+    until curl -fsS \
+      --head \
+      --digest --user "$ADMINUSER":"$ADMINPASSWORD" \
+      --max-time 1 \
+      http://"$HOST":8001/admin/v1/timestamp &>/dev/null
     do
-      echo "Restart hasn't completed. Retrying in 3 seconds…"
-      sleep 3
+      echo "Retrying…"
+      sleep 2
     done
-
-    echo "Done!"  
+    echo "Initialization completed"
     ;;
+  
+  # mlvm download ver [--nightly [20150101]] [--user user]
+  #   mlvm download -> latest version from DMC returns version string
+  #   mlvm download 7.0 -> latest patch of 7.0 from DMC
+  #   mlvm download 33 -> error
+  #   mlvm download 8.0 --nightly -> latest nightly from RMC/nightly
+  #   mlvm download 8.0 --nightly 20115010 -> specific nightly from RMC
+  download)
+    if [ -z "$3" ]
+    then
+        NIGHTLY=`date "+%Y%m%d"`
+    else
+        NIGHTLY="$3"
+    fi
+
+    VER="$2"-"$NIGHTLY"
+    
+    # TODO: Nightly
+    URL=https://root.marklogic.com/nightly/builds/macosx-64/osx-intel64-80-build.marklogic.com/HEAD/pkgs."$NIGHTLY"/MarkLogic-"$VER"-x86_64.dmg
+    #echo "$URL"
+    ME=${4:-"$USER"}    
+    #echo "$PWDSTART"
+    curl "$URL" -o "$PWDSTART"/MarkLogic-"$VER"-x86_64.dmg --basic --user "$ME" --insecure --fail
+    if [[ $? != 0 ]] ; then
+      exit 1
+    fi
+    echo "$VER"
+  ;;
   
   *) 
     echo "usage: mlvm [command] [options]*"
